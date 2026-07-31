@@ -331,7 +331,9 @@
 </button>
                     <button class="collapsed-extra-btn" id="collapsed-call-btn" title="视频通话" onclick="(function(){document.getElementById('collapsed-extras-panel').style.display='none';document.getElementById('collapse-expand-btn').classList.remove('open');if(window.callFeature&&typeof window.callFeature.startCall==='function')window.callFeature.startCall(false);})();">
                         <i class="fas fa-video"></i>
-                   
+                   <button class="collapsed-extra-btn" id="continue-btn-extra" title="让对方继续说" onclick="document.getElementById('continue-btn').click();">
+    <i class="fas fa-ellipsis-h"></i>
+</button>
                     </button>
                     <button class="collapsed-extra-btn" title="退出收纳" onclick="window.exitCollapseMode && window.exitCollapseMode()" style="color:#ff5050; background:rgba(255,80,80,0.1);">
                         <i class="fas fa-times"></i>
