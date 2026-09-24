@@ -1819,7 +1819,1021 @@
                 <button class="modal-btn modal-btn-primary" id="edit-existing-mood" style="font-size:12px; padding:6px 12px;">修改我的</button>
                 <button class="modal-btn modal-btn-primary" id="edit-partner-mood" onclick="editPartnerMoodRecord()" style="font-size:12px; padding:6px 12px; background:rgba(255,107,107,0.8);" data-edit-partner>修改梦角</button>
             </div>
-     
+     <!-- ========== 2. 面板 ========== -->
+<div class="qd-overlay" id="qd-overlay">
+  <div class="qd-sheet" role="dialog" aria-modal="true" aria-label="提问">
+
+    <header class="qd-header">
+      <div class="qd-title"><i class="fas fa-question-circle"></i> 提问</div>
+      <button type="button" class="qd-close" id="qd-close" aria-label="关闭">✕</button>
+    </header>
+
+    <nav class="qd-tabs">
+      <button type="button" class="qd-tab is-active" data-tab="ask">提问</button>
+      <button type="button" class="qd-tab" data-tab="bank">问题库 <em id="qd-count">0</em></button>
+    </nav>
+
+    <!-- ---------- 视图：提问 ---------- -->
+    <section class="qd-view" data-view="ask">
+
+      <!-- 编辑态 -->
+      <div id="qd-editbox">
+        <label class="qd-label" for="qd-q">问题</label>
+        <textarea class="qd-input qd-textarea" id="qd-q" maxlength="120" rows="2"
+                  placeholder="比如：如果我在你那边迷路了，你第一件事会做什么？"></textarea>
+
+        <label class="qd-label">答案选项<span class="qd-sub">（2–6 个，TA 会从中随机选一个）</span></label>
+        <div class="qd-options" id="qd-options"></div>
+        <button type="button" class="qd-add-opt" id="qd-add-opt">＋ 添加选项</button>
+
+        <label class="qd-label" for="qd-tag">标签<span class="qd-sub">（可选）</span></label>
+        <input class="qd-input" id="qd-tag" maxlength="8" autocomplete="off"
+               placeholder="日常 / 心动 / 灵魂">
+
+        <div class="qd-delay-head">
+          <span class="qd-label">思考时间</span>
+          <span class="qd-delay-val" id="qd-delay-val">5 秒</span>
+        </div>
+        <input type="range" class="qd-range" id="qd-delay"
+               min="0" max="30" step="1" value="5" aria-label="思考时间">
+        <div class="qd-range-scale"><span>0 秒</span><span>30 秒</span></div>
+
+        <p class="qd-edit-hint" id="qd-edit-hint" hidden>
+          正在编辑题库里的问题
+          <button type="button" id="qd-cancel-edit">取消编辑</button>
+        </p>
+
+        <div class="qd-form-actions">
+          <button type="button" class="qd-btn"        id="qd-send">发送</button>
+          <button type="button" class="qd-btn ghost"  id="qd-save">保存至题库</button>
+          <button type="button" class="qd-btn plain"  id="qd-cancel">取消</button>
+        </div>
+      </div>
+
+      <!-- 思考 / 结果态 -->
+      <div id="qd-runbox" hidden></div>
+
+    </section>
+
+    <!-- ---------- 视图：问题库 ---------- -->
+    <section class="qd-view" data-view="bank" hidden>
+      <div class="qd-list" id="qd-list"></div>
+    </section>
+
+  </div>
+</div>
+
+
+<!-- ========== 3. 样式 ========== -->
+<style>
+.qd-overlay{
+  --qd-radius:18px;
+
+  /* 跟随全局主题 */
+  --qd-surface:var(--primary-bg, #241f38);
+  --qd-surface2:var(--primary-bg, #1a1628);
+  --qd-ink:var(--text-primary, #ece9f7);
+  --qd-ink-soft:var(--text-secondary, #a49dc4);
+  --qd-accent:var(--accent-color, #ff8abe);
+  --qd-accent2:var(--accent-color, #a878ff);
+  --qd-line:var(--border-color, rgba(180,160,255,.16));
+  --qd-field:var(--border-color, rgba(255,255,255,.055));
+
+
+  position:fixed; inset:0; z-index:9999;
+  display:flex; align-items:center; justify-content:center;
+  padding:16px;
+  background:rgba(18,14,30,.58);
+  -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px);
+  opacity:0; visibility:hidden;
+  transition:opacity .24s ease, visibility .24s;
+}
+
+.qd-content{
+  width:100%;
+  max-width:420px;
+  padding:20px;
+  border-radius:var(--qd-radius);
+  background:var(--qd-surface);
+  color:var(--qd-ink);
+  border:1px solid var(--qd-line);
+  box-shadow:0 8px 30px rgba(0,0,0,.35);
+}
+
+.qd-title{
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:12px;
+  color:var(--qd-ink);
+}
+
+.qd-text{
+  color:var(--qd-ink-soft);
+  line-height:1.6;
+  margin-bottom:16px;
+}
+
+.qd-btn{
+  padding:10px 18px;
+  border-radius:12px;
+  background:var(--qd-accent);
+  color:#ffffff;
+  border:none;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.qd-btn:hover{
+  opacity:.9;
+}
+
+
+
+.qd-overlay.is-open{ opacity:1; visibility:visible; }
+
+.qd-sheet{
+  position:relative;
+  width:min(560px,100%);
+  max-height:min(86vh,760px);
+  display:flex; flex-direction:column;
+  border-radius:var(--qd-radius);
+  background:linear-gradient(165deg,var(--qd-surface),var(--qd-surface2) 62%);
+  color:var(--qd-ink);
+  border:1px solid var(--qd-line);
+  box-shadow:0 28px 70px -24px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.03) inset;
+  overflow:hidden;
+  transform:translateY(14px) scale(.975);
+  transition:transform .3s cubic-bezier(.2,.9,.3,1.25);
+}
+.qd-overlay.is-open .qd-sheet{ transform:none; }
+
+/* 头部 */
+.qd-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 18px 12px;
+}
+.qd-title{ font-size:15px; font-weight:600; letter-spacing:.02em; display:flex; gap:8px; align-items:center; }
+.qd-title i{ color:var(--qd-accent); }
+.qd-close{
+  width:30px; height:30px; border:0; border-radius:9px;
+  background:var(--qd-field); color:var(--qd-ink-soft);
+  font-size:13px; cursor:pointer; transition:.18s;
+}
+.qd-close:hover{ background:rgba(255,255,255,.11); color:var(--qd-ink); }
+
+/* Tab */
+.qd-tabs{ display:flex; gap:6px; padding:0 18px; border-bottom:1px solid var(--qd-line); }
+.qd-tab{
+  position:relative; padding:9px 4px 11px; margin-right:14px;
+  background:none; border:0; cursor:pointer;
+  color:var(--qd-ink-soft); font:inherit; font-size:13.5px;
+  transition:color .18s;
+}
+.qd-tab::after{
+  content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+  border-radius:2px; background:linear-gradient(90deg,var(--qd-accent),var(--qd-accent2));
+  transform:scaleX(0); transition:transform .22s;
+}
+.qd-tab.is-active{ color:var(--qd-ink); }
+.qd-tab.is-active::after{ transform:scaleX(1); }
+.qd-tab em{
+  font-style:normal; font-size:11px; opacity:.6;
+  background:var(--qd-field); border-radius:8px; padding:1px 6px; margin-left:2px;
+}
+
+/* 视图容器 */
+.qd-view{ flex:1; min-height:0; overflow-y:auto; padding:18px; }
+.qd-view[hidden]{ display:none; }
+.qd-view::-webkit-scrollbar{ width:6px; }
+.qd-view::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.13); border-radius:3px; }
+
+/* ------- 表单 ------- */
+.qd-label{
+  display:block; margin:16px 0 7px;
+  font-size:12.5px; color:var(--qd-ink-soft); letter-spacing:.03em;
+}
+.qd-label:first-child{ margin-top:0; }
+.qd-sub{ opacity:.55; margin-left:6px; font-size:11.5px; }
+
+.qd-input{
+  width:100%; box-sizing:border-box;
+  padding:10px 13px; border-radius:11px;
+  background:var(--qd-field); border:1px solid rgba(255,255,255,.1);
+  color:var(--qd-ink); font:inherit; font-size:14px;
+  transition:border-color .18s, background .18s;
+}
+.qd-input::placeholder{ color:rgba(255,255,255,.26); }
+.qd-input:focus{
+  outline:none; border-color:rgba(255,150,210,.55);
+  background:rgba(255,255,255,.085);
+}
+.qd-textarea{ resize:vertical; min-height:46px; line-height:1.5; font-family:inherit; }
+
+/* 选项输入 */
+.qd-options{ display:flex; flex-direction:column; gap:8px; }
+.qd-opt-row{ display:flex; gap:8px; align-items:center; animation:qd-in .2s ease; }
+.qd-opt-row .qd-input{ flex:1; }
+.qd-del-opt{
+  flex:none; width:34px; height:38px; border-radius:11px;
+  background:var(--qd-field); border:1px solid rgba(255,255,255,.09);
+  color:var(--qd-ink-soft); cursor:pointer; font-size:12px; transition:.18s;
+}
+.qd-del-opt:hover{ background:rgba(255,110,110,.18); color:#ff9b9b; border-color:rgba(255,110,110,.3); }
+.qd-add-opt{
+  margin-top:9px; padding:7px 13px; border-radius:10px;
+  background:none; border:1px dashed rgba(255,255,255,.2);
+  color:var(--qd-ink-soft); font:inherit; font-size:12.5px;
+  cursor:pointer; transition:.18s;
+}
+.qd-add-opt:hover{ border-color:rgba(255,150,210,.5); color:var(--qd-accent); }
+
+/* 思考时间滑块 */
+.qd-delay-head{
+  display:flex; align-items:baseline; justify-content:space-between;
+  margin:18px 0 9px;
+}
+.qd-delay-head .qd-label{ margin:0; }
+.qd-delay-val{
+  font-size:13px; font-weight:600;
+  color:var(--qd-accent); letter-spacing:.02em;
+  font-variant-numeric:tabular-nums;
+}
+.qd-range{
+  -webkit-appearance:none; appearance:none;
+  width:100%; height:5px; border-radius:3px;
+  background:rgba(255,255,255,.14);
+  outline:none; cursor:pointer;
+  transition:background .12s linear;
+}
+.qd-range::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none;
+  width:18px; height:18px; border-radius:50%;
+  background:linear-gradient(120deg,var(--qd-accent),var(--qd-accent2));
+  box-shadow:0 0 0 4px rgba(255,138,190,.16), 0 3px 10px -2px rgba(0,0,0,.6);
+  cursor:pointer; transition:box-shadow .2s;
+}
+.qd-range::-webkit-slider-thumb:hover{ box-shadow:0 0 0 8px rgba(255,138,190,.22); }
+.qd-range::-moz-range-thumb{
+  width:18px; height:18px; border:0; border-radius:50%;
+  background:linear-gradient(120deg,var(--qd-accent),var(--qd-accent2));
+  box-shadow:0 0 0 4px rgba(255,138,190,.16);
+  cursor:pointer;
+}
+.qd-range::-moz-range-track{ height:5px; border-radius:3px; background:transparent; }
+.qd-range-scale{
+  display:flex; justify-content:space-between;
+  margin-top:6px; font-size:11px; color:rgba(255,255,255,.28);
+}
+
+/* 编辑提示 */
+.qd-edit-hint{ margin:14px 0 0; font-size:12.5px; color:var(--qd-accent); }
+.qd-edit-hint button{
+  background:none; border:0; padding:0 0 0 6px;
+  color:var(--qd-ink-soft); text-decoration:underline;
+  cursor:pointer; font:inherit; font-size:12.5px;
+}
+
+/* 按钮 */
+.qd-form-actions{ display:flex; flex-wrap:wrap; gap:9px; margin-top:22px; }
+.qd-btn{
+  padding:9px 18px; border-radius:11px; border:1px solid transparent;
+  font:inherit; font-size:13.5px; font-weight:500; cursor:pointer;
+  color:#241f38; background:linear-gradient(120deg,var(--qd-accent),var(--qd-accent2));
+  transition:.2s; display:inline-flex; align-items:center; gap:7px;
+}
+.qd-btn:hover{ filter:brightness(1.08); transform:translateY(-1px); }
+.qd-btn:active{ transform:translateY(0); }
+.qd-btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; filter:none; }
+.qd-btn.ghost{
+  background:var(--qd-field); color:var(--qd-ink-soft);
+  border-color:rgba(255,255,255,.12);
+}
+.qd-btn.ghost:hover{ color:var(--qd-ink); background:rgba(255,255,255,.1); }
+.qd-btn.plain{
+  background:none; color:var(--qd-ink-soft);
+  border-color:transparent; padding-left:10px; padding-right:10px;
+}
+.qd-btn.plain:hover{ color:var(--qd-ink); background:rgba(255,255,255,.06); }
+
+/* ------- 运行/结果卡片 ------- */
+.qd-qcard{
+  border-radius:16px; padding:20px 18px 18px;
+  background:linear-gradient(150deg,rgba(168,120,255,.13),rgba(255,138,190,.09));
+  border:1px solid var(--qd-line);
+  animation:qd-in .32s ease;
+}
+@keyframes qd-in{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none;} }
+
+.qd-qtag{
+  display:inline-block; margin-bottom:10px;
+  font-size:11px; letter-spacing:.06em;
+  color:var(--qd-accent); background:rgba(255,138,190,.13);
+  border:1px solid rgba(255,138,190,.28);
+  padding:2px 9px; border-radius:20px;
+}
+.qd-qtext{
+  margin:0 0 16px; font-size:16px; line-height:1.6; font-weight:500;
+  letter-spacing:.01em; word-break:break-word;
+}
+
+.qd-opts{ display:flex; flex-direction:column; gap:8px; }
+.qd-opt{
+  display:flex; align-items:center; gap:10px;
+  padding:11px 14px; border-radius:12px;
+  font-size:14px; color:inherit;
+  background:var(--qd-field);
+  border:1px solid rgba(255,255,255,.085);
+  transition:all .28s ease;
+  word-break:break-word;
+}
+.qd-opt .dot{
+  flex:none; width:17px; height:17px; border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.32);
+  display:grid; place-items:center; font-size:10px; line-height:1;
+  transition:.28s;
+}
+.qd-opt.is-wait{ opacity:.34; }
+.qd-opt.is-picked{
+  background:linear-gradient(90deg,rgba(255,138,190,.2),rgba(168,120,255,.2));
+  border-color:rgba(255,150,210,.62);
+  box-shadow:0 0 0 1px rgba(255,150,210,.2), 0 6px 20px -10px rgba(255,138,190,.7);
+}
+.qd-opt.is-picked .dot{ background:var(--qd-accent); border-color:var(--qd-accent); color:#241f38; }
+.qd-opt.is-lost{ opacity:.4; }
+
+/* 进度条 */
+.qd-progress{
+  height:3px; border-radius:2px; margin-top:18px;
+  background:rgba(255,255,255,.1);
+  overflow:hidden;
+}
+.qd-progress-bar{
+  height:100%; width:0; border-radius:2px;
+  background:linear-gradient(90deg,var(--qd-accent),var(--qd-accent2));
+}
+
+/* 状态文字 */
+.qd-status{
+  margin:14px 0 0; min-height:20px;
+  font-size:13px; color:var(--qd-ink-soft); line-height:1.5;
+}
+.qd-status strong{ color:var(--qd-accent); font-weight:600; }
+.qd-status.is-thinking::after{
+  content:''; display:inline-block; width:1em; text-align:left;
+  animation:qd-dots 1.2s steps(4,end) infinite;
+}
+@keyframes qd-dots{ 0%{content:'';} 25%{content:'.';} 50%{content:'..';} 75%{content:'...';} }
+
+.qd-qfoot{ display:flex; flex-wrap:wrap; gap:9px; margin-top:20px; }
+
+/* ------- 问题库列表 ------- */
+.qd-list-title{
+  font-size:12px; color:var(--qd-ink-soft); letter-spacing:.06em;
+  margin:0 0 12px; text-transform:uppercase;
+}
+.qd-item{
+  display:flex; align-items:center; gap:12px;
+  padding:13px 14px; margin-bottom:9px;
+  border-radius:13px; background:var(--qd-field);
+  border:1px solid rgba(255,255,255,.07);
+  transition:.2s;
+}
+.qd-item:hover{ border-color:var(--qd-line); background:rgba(255,255,255,.075); }
+.qd-item-main{ flex:1; min-width:0; }
+.qd-item-q{
+  margin:0 0 5px; font-size:14px; line-height:1.45;
+  overflow:hidden; text-overflow:ellipsis; display:-webkit-box;
+  -webkit-line-clamp:2; -webkit-box-orient:vertical;
+}
+.qd-item-meta{ margin:0; font-size:11.5px; color:var(--qd-ink-soft); }
+.qd-mini-tag{
+  color:var(--qd-accent); background:rgba(255,138,190,.12);
+  padding:1px 7px; border-radius:8px; margin-right:6px;
+}
+.qd-item-acts{ display:flex; gap:4px; flex:none; }
+.qd-item-acts button{
+  width:30px; height:30px; border-radius:9px; border:0;
+  background:transparent; color:var(--qd-ink-soft);
+  cursor:pointer; font-size:12px; transition:.16s;
+}
+.qd-item-acts button:hover{ background:rgba(255,255,255,.1); color:var(--qd-ink); }
+.qd-item-acts button[data-act="del"]:hover{ background:rgba(255,110,110,.16); color:#ff9b9b; }
+
+/* 空态 */
+.qd-empty{ text-align:center; padding:44px 16px; color:var(--qd-ink-soft); }
+.qd-empty i{ font-size:26px; opacity:.4; display:block; margin-bottom:14px; }
+.qd-empty p{ margin:0 0 18px; font-size:14px; }
+.qd-empty-tip{ color:var(--qd-ink-soft); font-size:13px; text-align:center; padding:22px 0; }
+
+/* Toast */
+.qd-toast{
+  position:absolute; left:50%; bottom:22px; transform:translate(-50%,14px);
+  padding:9px 18px; border-radius:20px; font-size:13px;
+  background:rgba(20,16,32,.94); color:#ece9f7;
+  border:1px solid var(--qd-line);
+  opacity:0; pointer-events:none; transition:.26s; white-space:nowrap;
+  z-index:5;
+}
+.qd-toast.is-show{ opacity:1; transform:translate(-50%,0); }
+
+@media (max-width:520px){
+  .qd-overlay{ padding:0; align-items:flex-end; }
+  .qd-sheet{
+    width:100%; max-height:90vh;
+    border-radius:20px 20px 0 0;
+    transform:translateY(100%);
+  }
+  .qd-overlay.is-open .qd-sheet{ transform:none; }
+  .qd-view{ padding:16px 14px calc(20px + env(safe-area-inset-bottom)); }
+  .qd-form-actions .qd-btn{ flex:1; justify-content:center; }
+}
+</style>
+
+
+<!-- ========== 4. 逻辑 ========== -->
+<script>
+(function () {
+  'use strict';
+
+  const BANK_KEY  = 'crossdim.question.bank.v2';
+  const DELAY_KEY = 'crossdim.question.delay';
+
+  const MIN_OPTIONS = 2;
+  const MAX_OPTIONS = 6;
+  const MIN_DELAY   = 0;
+  const MAX_DELAY   = 30;
+
+  const $  = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const uid = () => 'q_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const esc = s => String(s).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+
+  /* ---------------- 状态 ---------------- */
+  let bank = [];
+  let editingId = null;
+
+  // 一次提问的运行状态
+  const run = {
+    active: false,
+    q: '',
+    opts: [],
+    tag: '',
+    delay: 0,
+    timeout: null,
+    ticker: null,
+    picked: -1
+  };
+
+  let el = {};
+
+  /* ---------------- 存储 ---------------- */
+  function loadBank() {
+    try {
+      const raw = localStorage.getItem(BANK_KEY);
+      const data = raw ? JSON.parse(raw) : [];
+      bank = Array.isArray(data)
+        ? data.filter(x => x && x.id && typeof x.q === 'string' && Array.isArray(x.options) && x.options.length >= 2)
+        : [];
+    } catch (e) {
+      console.warn('[提问] 问题库读取失败', e);
+      bank = [];
+    }
+  }
+  function saveBank() {
+    try {
+      localStorage.setItem(BANK_KEY, JSON.stringify(bank));
+    } catch (e) {
+      console.warn('[提问] 问题库保存失败', e);
+      toast('保存失败了，存储空间可能已满');
+    }
+  }
+  function loadDelay() {
+    const v = parseInt(localStorage.getItem(DELAY_KEY), 10);
+    return Number.isFinite(v) && v >= MIN_DELAY && v <= MAX_DELAY ? v : 5;
+  }
+  function saveDelay(v) {
+    try { localStorage.setItem(DELAY_KEY, String(v)); } catch (e) {}
+  }
+
+  /* ---------------- Toast ---------------- */
+  let toastTimer = null;
+  function toast(msg) {
+    if (!el.sheet) return;
+    let t = $('.qd-toast', el.sheet);
+    if (!t) {
+      t = document.createElement('div');
+      t.className = 'qd-toast';
+      el.sheet.appendChild(t);
+    }
+    t.textContent = msg;
+    requestAnimationFrame(() => t.classList.add('is-show'));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('is-show'), 1900);
+  }
+
+  /* ---------------- 面板 / Tab ---------------- */
+  function openPanel() {
+    el.overlay.classList.add('is-open');
+    if (!el.qInput.value && !run.active) el.qInput.focus();
+  }
+  function closePanel() {
+    abortRun(true);
+    el.overlay.classList.remove('is-open');
+  }
+  function switchTab(name) {
+    $$('.qd-tab', el.sheet).forEach(t =>
+      t.classList.toggle('is-active', t.dataset.tab === name));
+    $$('.qd-view', el.sheet).forEach(v => { v.hidden = v.dataset.view !== name; });
+  }
+
+  /* ---------------- 选项输入行 ---------------- */
+  function makeOptRow(value = '') {
+    const row = document.createElement('div');
+    row.className = 'qd-opt-row';
+
+    const input = document.createElement('input');
+    input.className = 'qd-input qd-opt-input';
+    input.type = 'text';
+    input.maxLength = 40;
+    input.autocomplete = 'off';
+    input.placeholder = '选项内容';
+    input.value = value;
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'qd-del-opt';
+    del.setAttribute('aria-label', '删除该选项');
+    del.textContent = '✕';
+    del.addEventListener('click', () => {
+      if ($$('.qd-opt-row', el.optionsBox).length <= MIN_OPTIONS) {
+        toast(`至少保留 ${MIN_OPTIONS} 个选项`);
+        return;
+      }
+      row.remove();
+    });
+
+    row.append(input, del);
+    return row;
+  }
+
+  function renderOptionRows(values) {
+    el.optionsBox.innerHTML = '';
+    const list = (values && values.length >= MIN_OPTIONS) ? values : ['', ''];
+    list.forEach(v => el.optionsBox.appendChild(makeOptRow(v)));
+  }
+
+  function readOptions() {
+    return $$('.qd-opt-input', el.optionsBox).map(i => i.value.trim());
+  }
+
+  /* ---------------- 思考时间滑块 ---------------- */
+  function paintRange() {
+    const v = +el.delay.value;
+    const p = ((v - MIN_DELAY) / (MAX_DELAY - MIN_DELAY)) * 100;
+    el.delay.style.background =
+      `linear-gradient(90deg, var(--qd-accent) 0%, var(--qd-accent2) ${p}%, ` +
+      `rgba(255,255,255,.14) ${p}%, rgba(255,255,255,.14) 100%)`;
+    el.delayVal.textContent = v === 0 ? '0 秒 · 直接答' : v + ' 秒';
+  }
+
+  /* ---------------- 编辑态 ---------------- */
+  function showEdit() {
+    el.editBox.hidden = false;
+    el.runBox.hidden = true;
+  }
+  function resetForm() {
+    el.qInput.value = '';
+    el.tagInput.value = '';
+    renderOptionRows(['', '']);
+    editingId = null;
+    el.editHint.hidden = true;
+    el.saveBtn.textContent = '保存至题库';
+  }
+  function loadToEdit(id) {
+    const q = bank.find(x => x.id === id);
+    if (!q) return;
+    abortRun(true);
+    editingId = id;
+    el.qInput.value = q.q;
+    el.tagInput.value = q.tag || '';
+    renderOptionRows(q.options);
+    el.editHint.hidden = false;
+    el.saveBtn.textContent = '更新题库';
+    switchTab('ask');
+    showEdit();
+    el.qInput.focus();
+  }
+
+  /* ---------------- 渲染：问题库 ---------------- */
+  function renderList() {
+    el.count.textContent = bank.length;
+
+    if (!bank.length) {
+      el.list.innerHTML = `<p class="qd-empty-tip">题库还是空的。写好问题后点「保存至题库」。</p>`;
+      return;
+    }
+
+    el.list.innerHTML =
+      `<p class="qd-list-title">共 ${bank.length} 个问题</p>` +
+      bank.map(q => `
+        <div class="qd-item" data-id="${q.id}">
+          <div class="qd-item-main">
+            <p class="qd-item-q">${esc(q.q)}</p>
+            <p class="qd-item-meta">
+              ${q.tag ? `<span class="qd-mini-tag">${esc(q.tag)}</span>` : ''}
+              ${q.options.length} 个选项
+              ${q.lastPick != null && q.options[q.lastPick]
+                ? ` · 上次选了「${esc(q.options[q.lastPick])}」`
+                : ' · 还没问过'}
+            </p>
+          </div>
+          <div class="qd-item-acts">
+            <button type="button" data-act="ask"  title="去提问"><i class="fas fa-paper-plane"></i></button>
+            <button type="button" data-act="edit" title="编辑"><i class="fas fa-pen"></i></button>
+            <button type="button" data-act="del"  title="删除"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`).join('');
+  }
+
+  /* ---------------- 运行态：渲染 ---------------- */
+  function renderRun() {
+    el.runBox.innerHTML = `
+      <div class="qd-qcard">
+        ${run.tag ? `<span class="qd-qtag">${esc(run.tag)}</span>` : ''}
+        <p class="qd-qtext">${esc(run.q)}</p>
+        <div class="qd-opts" id="qd-run-opts"></div>
+        <div class="qd-progress" id="qd-progress" hidden>
+          <div class="qd-progress-bar" id="qd-progress-bar"></div>
+        </div>
+        <p class="qd-status" id="qd-run-status"></p>
+        <div class="qd-qfoot" id="qd-run-foot"></div>
+      </div>`;
+
+    const optsBox = $('#qd-run-opts');
+    run.opts.forEach((text, i) => {
+      const d = document.createElement('div');
+      d.className = 'qd-opt is-wait';
+      d.dataset.i = i;
+      d.innerHTML = `<span class="dot"></span><span class="txt">${esc(text)}</span>`;
+      optsBox.appendChild(d);
+    });
+  }
+
+  function runOptNodes() { return $$('#qd-run-opts .qd-opt'); }
+
+  function setRunStatus(html, thinking) {
+    const s = $('#qd-run-status');
+    if (!s) return;
+    s.innerHTML = html;
+    s.classList.toggle('is-thinking', !!thinking);
+  }
+
+  function renderRunFoot(state) {
+    const foot = $('#qd-run-foot');
+    if (!foot) return;
+    if (state === 'thinking') {
+      foot.innerHTML = `<button type="button" class="qd-btn plain" data-act="abort">取消</button>`;
+    } else {
+      foot.innerHTML = `
+        <button type="button" class="qd-btn"       data-act="again">再问一次</button>
+        <button type="button" class="qd-btn ghost" data-act="back">修改问题</button>
+        <button type="button" class="qd-btn ghost" data-act="save">保存至题库</button>`;
+    }
+  }
+
+  /* ---------------- 运行态：开始 ---------------- */
+  function startRun() {
+    const q  = el.qInput.value.trim();
+    const raw = readOptions();
+
+    if (!q) { toast('先写下你的问题'); el.qInput.focus(); return; }
+    if (raw.some(v => !v)) { toast('还有选项是空的'); return; }
+
+    const opts = Array.from(new Set(raw));
+    if (opts.length < MIN_OPTIONS) { toast('选项内容不能重复'); return; }
+
+    const delay = +el.delay.value;
+
+    run.active = true;
+    run.q = q;
+    run.opts = opts;
+    run.tag = el.tagInput.value.trim();
+    run.delay = delay;
+    run.picked = -1;
+
+    el.editBox.hidden = true;
+    el.runBox.hidden = false;
+    renderRun();
+
+    if (delay > 0) {
+      setRunStatus('TA 正在思考', true);
+      renderRunFoot('thinking');
+      startProgress(delay);
+      startCountdown(delay);
+      run.timeout = setTimeout(finishRun, delay * 1000);
+    } else {
+      setRunStatus('TA 几乎没犹豫');
+      renderRunFoot('thinking');
+      run.timeout = setTimeout(finishRun, 320);
+    }
+  }
+
+  function startProgress(sec) {
+    const box = $('#qd-progress');
+    const bar = $('#qd-progress-bar');
+    if (!box || !bar) return;
+    box.hidden = false;
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+    // 强制重排后再启动动画
+    void bar.offsetWidth;
+    requestAnimationFrame(() => {
+      bar.style.transition = `width ${sec}s linear`;
+      bar.style.width = '100%';
+    });
+  }
+
+  function startCountdown(sec) {
+    const end = Date.now() + sec * 1000;
+    const update = () => {
+      const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+      if (run.active) setRunStatus(`TA 正在思考　<strong>${left}</strong> 秒`, true);
+      if (left <= 0) clearInterval(run.ticker);
+    };
+    update();
+    run.ticker = setInterval(update, 200);
+  }
+
+  /* ---------------- 运行态：结束（随机选） ---------------- */
+  function finishRun() {
+    clearRunTimers();
+    if (!run.active) return;
+
+    // 纯随机，不接任何 AI
+    const idx = Math.floor(Math.random() * run.opts.length);
+    run.picked = idx;
+
+    const nodes = runOptNodes();
+    nodes.forEach(n => {
+      const i = Number(n.dataset.i);
+      n.classList.remove('is-wait');
+      n.classList.toggle('is-picked', i === idx);
+      n.classList.toggle('is-lost', i !== idx);
+      const dot = $('.dot', n);
+      if (dot) dot.textContent = i === idx ? '✓' : '';
+    });
+
+    setRunStatus(`TA 选了：<strong>${esc(run.opts[idx])}</strong>`);
+    renderRunFoot('done');
+    run.active = false;
+
+    // 如果这个问题来自题库，记下这次的结果
+    const fromBank = bank.find(x => x.q === run.q &&
+      x.options.length === run.opts.length &&
+      x.options.every((o, i) => o === run.opts[i]));
+    if (fromBank) {
+      fromBank.lastPick = idx;
+      fromBank.askCount = (fromBank.askCount || 0) + 1;
+      saveBank();
+      renderList();
+    }
+  }
+
+  /* ---------------- 运行态：再次 / 中止 ---------------- */
+  function againRun() {
+    if (!run.opts.length) return;
+    run.active = false;
+    el.runBox.hidden = true;
+    el.editBox.hidden = false;
+    // 用同样的内容再跑一次
+    el.qInput.value = run.q;
+    el.tagInput.value = run.tag;
+    renderOptionRows(run.opts);
+    startRun();
+  }
+
+  function abortRun(silent) {
+    clearRunTimers();
+    const wasActive = run.active;
+    run.active = false;
+    if (!silent && wasActive) {
+      el.runBox.hidden = true;
+      el.editBox.hidden = false;
+      toast('已取消这次提问');
+    } else if (!wasActive && !el.runBox.hidden) {
+      el.runBox.hidden = true;
+      el.editBox.hidden = false;
+    }
+  }
+
+  function clearRunTimers() {
+    if (run.timeout) { clearTimeout(run.timeout); run.timeout = null; }
+    if (run.ticker)  { clearInterval(run.ticker); run.ticker = null; }
+  }
+
+  /* ---------------- 保存至题库 ---------------- */
+  function saveToBank() {
+    let q, opts, tag;
+
+    if (!el.runBox.hidden) {          // 从运行/结果态保存
+      q = run.q; opts = run.opts; tag = run.tag;
+    } else {                          // 从编辑态保存
+      q = el.qInput.value.trim();
+      const raw = readOptions();
+      if (!q) { toast('先写下你的问题'); el.qInput.focus(); return; }
+      if (raw.some(v => !v)) { toast('还有选项是空的'); return; }
+      opts = Array.from(new Set(raw));
+      if (opts.length < MIN_OPTIONS) { toast('选项内容不能重复'); return; }
+      tag = el.tagInput.value.trim();
+    }
+
+    if (editingId) {
+      const item = bank.find(x => x.id === editingId);
+      if (item) {
+        item.q = q;
+        item.options = opts;
+        item.tag = tag;
+        if (item.lastPick != null && item.lastPick >= opts.length) item.lastPick = null;
+        saveBank(); renderList();
+        toast('已更新题库里的问题');
+        editingId = null;
+        el.editHint.hidden = true;
+        el.saveBtn.textContent = '保存至题库';
+        return;
+      }
+    }
+
+    const exist = bank.find(x => x.q === q);
+    if (exist) {
+      exist.options = opts;
+      exist.tag = tag;
+      if (exist.lastPick != null && exist.lastPick >= opts.length) exist.lastPick = null;
+      saveBank(); renderList();
+      toast('同名问题已更新');
+      return;
+    }
+
+    bank.unshift({
+      id: uid(),
+      q, options: opts, tag,
+      createdAt: Date.now(),
+      lastPick: null,
+      askCount: 0
+    });
+    saveBank(); renderList();
+    toast('已保存至题库');
+  }
+
+  /* ---------------- 取消 ---------------- */
+  function cancelAll() {
+    // 运行中 → 中断回到编辑
+    if (!el.runBox.hidden) {
+      abortRun(false);
+      return;
+    }
+    // 编辑态：有内容则清空，空则关闭面板
+    const hasContent = el.qInput.value.trim() ||
+                       el.tagInput.value.trim() ||
+                       readOptions().some(v => v);
+    if (hasContent) {
+      resetForm();
+      renderOptionRows(['', '']);
+      toast('已清空');
+    } else {
+      closePanel();
+    }
+  }
+
+  /* ---------------- 事件绑定 ---------------- */
+  function bind() {
+    const entry = document.getElementById('question-function');
+    if (entry) entry.addEventListener('click', openPanel);
+
+    el.close.addEventListener('click', closePanel);
+    el.overlay.addEventListener('click', e => { if (e.target === el.overlay) closePanel(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && el.overlay.classList.contains('is-open')) closePanel();
+    });
+
+    $$('.qd-tab', el.sheet).forEach(t =>
+      t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+    // 思考时间
+    el.delay.min = MIN_DELAY;
+    el.delay.max = MAX_DELAY;
+    el.delay.addEventListener('input', () => {
+      paintRange();
+      saveDelay(+el.delay.value);
+    });
+
+    // 选项
+    el.addOpt.addEventListener('click', () => {
+      if ($$('.qd-opt-row', el.optionsBox).length >= MAX_OPTIONS) {
+        toast(`最多 ${MAX_OPTIONS} 个选项`);
+        return;
+      }
+      const row = makeOptRow('');
+      el.optionsBox.appendChild(row);
+      row.querySelector('input').focus();
+    });
+
+    // 三按钮
+    el.sendBtn.addEventListener('click', startRun);
+    el.saveBtn.addEventListener('click', saveToBank);
+    el.cancelBtn.addEventListener('click', cancelAll);
+    el.cancelEdit.addEventListener('click', () => {
+      resetForm();
+      renderOptionRows(['', '']);
+      toast('已取消编辑');
+    });
+
+    // 运行态按钮（委托）
+    el.runBox.addEventListener('click', e => {
+      const btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      switch (btn.dataset.act) {
+        case 'abort': abortRun(false); break;
+        case 'again': againRun();      break;
+        case 'back':  abortRun(false); break;
+        case 'save':  saveToBank();    break;
+      }
+    });
+
+    // 问题库
+    el.list.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-act]');
+      if (!btn) return;
+      const id = btn.closest('.qd-item').dataset.id;
+
+      if (btn.dataset.act === 'ask') {
+        loadToEdit(id);
+      } else if (btn.dataset.act === 'edit') {
+        loadToEdit(id);
+      } else if (btn.dataset.act === 'del') {
+        const q = bank.find(x => x.id === id);
+        if (!q) return;
+        if (!confirm(`删除问题「${q.q}」？`)) return;
+        bank = bank.filter(x => x.id !== id);
+        if (editingId === id) { editingId = null; el.editHint.hidden = true; el.saveBtn.textContent = '保存至题库'; }
+        saveBank(); renderList();
+        toast('已删除');
+      }
+    });
+  }
+
+  /* ---------------- 初始化 ---------------- */
+  function init() {
+    el = {
+      overlay:    document.getElementById('qd-overlay'),
+      sheet:      document.querySelector('.qd-sheet'),
+      close:      document.getElementById('qd-close'),
+      count:      document.getElementById('qd-count'),
+      editBox:    document.getElementById('qd-editbox'),
+      runBox:     document.getElementById('qd-runbox'),
+      qInput:     document.getElementById('qd-q'),
+      tagInput:   document.getElementById('qd-tag'),
+      optionsBox: document.getElementById('qd-options'),
+      addOpt:     document.getElementById('qd-add-opt'),
+      delay:      document.getElementById('qd-delay'),
+      delayVal:   document.getElementById('qd-delay-val'),
+      editHint:   document.getElementById('qd-edit-hint'),
+      cancelEdit: document.getElementById('qd-cancel-edit'),
+      sendBtn:    document.getElementById('qd-send'),
+      saveBtn:    document.getElementById('qd-save'),
+      cancelBtn:  document.getElementById('qd-cancel'),
+      list:       document.getElementById('qd-list')
+    };
+    if (!el.overlay || !el.runBox) return;   // 页面上没有面板
+
+    loadBank();
+    el.delay.value = loadDelay();
+    paintRange();
+    renderOptionRows(['', '']);
+    renderList();
+    bind();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  /* 对外暴露（调试 / 预置题库） */
+  window.CrossDimQuestion = {
+    get bank() { return bank; },
+    open: openPanel,
+    close: closePanel,
+    reset() {
+      bank = [];
+      saveBank();
+      renderList();
+      toast('题库已清空');
+    }
+  };
+})();
+</script>
 
 
         </div>
