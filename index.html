@@ -23,7 +23,101 @@
     <link rel="stylesheet" href="css/styles.css">
 
     <style id="css-live-preview-style"></style>
+
+<!-- 锁屏密码：样式 -->
+<style>
+#myLockScreen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #f0f0f0;
+    display: flex; justify-content: center; align-items: center;
+    z-index: 999999;
+}
+#myLockScreen .my-lock-box {
+    background: #fff; padding: 40px 30px; border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-align: center;
+    max-width: 90%;
+}
+#myLockScreen h2 { margin: 0 0 20px; font-size: 20px; color: #333; }
+#myLockScreen input {
+    padding: 12px; font-size: 16px; border: 2px solid #ddd;
+    border-radius: 8px; width: 200px; max-width: 80%; margin-bottom: 16px;
+    outline: none; box-sizing: border-box;
+}
+#myLockScreen input:focus { border-color: #007bff; }
+#myLockScreen button {
+    padding: 12px 32px; font-size: 16px; background: #007bff;
+    color: #fff; border: none; border-radius: 8px; cursor: pointer;
+}
+#myLockScreen button:hover { background: #0056b3; }
+#myLockScreen .my-error { color: #e74c3c; font-size: 14px; margin-top: 10px; min-height: 18px; }
+</style>
+    
 </head>
+
+<!-- 锁屏密码：界面 -->
+<div id="myLockScreen">
+    <div class="my-lock-box">
+        <h2>🔒 请输入密码</h2>
+        <input type="password" id="myPasswordInput" placeholder="输入密码后按回车" autocomplete="off">
+        <br>
+        <button onclick="myCheckPassword()">解锁</button>
+        <div class="my-error" id="myErrorMsg"></div>
+    </div>
+</div>
+
+<!-- 锁屏密码：逻辑 -->
+<script>
+    // ★★★ 在这里改你的密码 ★★★
+    var MY_LOCK_PASSWORD = "0418";
+
+    var myLockScreen = document.getElementById("myLockScreen");
+    var myPasswordInput = document.getElementById("myPasswordInput");
+    var myErrorMsg = document.getElementById("myErrorMsg");
+    var myUnlocked = false;
+
+    function myShowLock() {
+        myLockScreen.style.display = "flex";
+        myPasswordInput.value = "";
+        myErrorMsg.textContent = "";
+        setTimeout(function() {
+            myPasswordInput.focus();
+        }, 100);
+    }
+
+    function myHideLock() {
+        myLockScreen.style.display = "none";
+    }
+
+    function myCheckPassword() {
+        if (myPasswordInput.value === MY_LOCK_PASSWORD) {
+            myUnlocked = true;
+            myHideLock();
+        } else {
+            myErrorMsg.textContent = "密码错误，请重试";
+            myPasswordInput.value = "";
+            myPasswordInput.focus();
+        }
+    }
+
+    myPasswordInput.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            myCheckPassword();
+        }
+    });
+
+    document.addEventListener("visibilitychange", function() {
+        if (document.hidden) {
+            myUnlocked = false;
+        } else {
+            if (!myUnlocked) {
+                myShowLock();
+            }
+        }
+    });
+
+    myShowLock();
+</script>
+    
 <body>
 <div id="splash-declaration">
     <div class="splash-bg-stars" id="splash-stars"></div>
